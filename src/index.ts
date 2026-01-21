@@ -9,6 +9,7 @@ import { LeetCodeBaseService } from "./leetcode/leetcode-base-service.js";
 import { LeetCodeServiceFactory } from "./leetcode/leetcode-service-factory.js";
 import { registerProblemResources } from "./mcp/resources/problem-resources.js";
 import { registerSolutionResources } from "./mcp/resources/solution-resources.js";
+import { registerAuthTools } from "./mcp/tools/auth-tools.js";
 import { registerContestTools } from "./mcp/tools/contest-tools.js";
 import { registerNoteTools } from "./mcp/tools/note-tools.js";
 import { registerProblemTools } from "./mcp/tools/problem-tools.js";
@@ -95,6 +96,7 @@ async function main() {
     registerContestTools(server, leetcodeService);
     registerSolutionTools(server, leetcodeService);
     registerNoteTools(server, leetcodeService);
+    registerAuthTools(server, leetcodeService);
 
     registerProblemResources(server, leetcodeService);
     registerSolutionResources(server, leetcodeService);
