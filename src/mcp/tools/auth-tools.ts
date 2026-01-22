@@ -56,21 +56,32 @@ async function authorizeLeetCode(
         // Navigate to login page
         await page.goto(loginUrl);
 
-        // Wait for user to complete login (detect successful login by checking for profile page elements)
+        // Wait for user to complete login (detect successful login by URL change)
         console.log("Waiting for user to log in...");
+        console.log("Please log in to LeetCode in the browser window...");
 
-        // Wait for either:
-        // 1. User profile dropdown (successful login)
-        // 2. Timeout (60 seconds)
+        // Wait for successful login by detecting URL change away from login page
         try {
-            await page.waitForSelector('[data-cypress="user-menu"]', {
-                timeout: 60000
-            });
+            await page.waitForFunction(
+                () => {
+                    const url = window.location.href;
+                    return (
+                        !url.includes("/accounts/login") &&
+                        !url.includes("/accounts/signup")
+                    );
+                },
+                { timeout: 90000 }
+            );
+
+            console.log("Login detected! Extracting cookies...");
+
+            // Give a moment for cookies to be set
+            await sleep(2000);
         } catch (error) {
             return {
                 success: false,
                 message: "Login timeout. Please try again.",
-                error: "User did not complete login within 60 seconds"
+                error: "User did not complete login within 90 seconds"
             };
         }
 
@@ -119,6 +130,35 @@ async function authorizeLeetCode(
     }
 }
 
+async function getQuestionId(
+    problemSlug: string,
+    baseUrl: string,
+    credentials: LeetCodeCredentials
+): Promise<string> {
+    const graphqlQuery = {
+        query: `
+            query questionTitle($titleSlug: String!) {
+                question(titleSlug: $titleSlug) {
+                    questionId
+                    questionFrontendId
+                }
+            }
+        `,
+        variables: { titleSlug: problemSlug }
+    };
+
+    const response = await axios.post(`${baseUrl}/graphql`, graphqlQuery, {
+        headers: {
+            "Content-Type": "application/json",
+            Cookie: `csrftoken=${credentials.csrftoken}; LEETCODE_SESSION=${credentials.LEETCODE_SESSION}`,
+            "X-CSRFToken": credentials.csrftoken,
+            Referer: `${baseUrl}/problems/${problemSlug}/`
+        }
+    });
+
+    return response.data.data.question.questionId;
+}
+
 async function submitSolution(
     request: SubmissionRequest
 ): Promise<SubmissionResult> {
@@ -151,6 +191,13 @@ async function submitSolution(
             : "https://leetcode.com";
 
     try {
+        // First, get the numeric question ID
+        const questionId = await getQuestionId(
+            problemSlug,
+            baseUrl,
+            credentials
+        );
+
         // Submit solution
         const submitUrl = `${baseUrl}/problems/${problemSlug}/submit/`;
 
@@ -158,7 +205,7 @@ async function submitSolution(
             submitUrl,
             {
                 lang: leetcodeLang,
-                question_id: problemSlug,
+                question_id: questionId,
                 typed_code: code
             },
             {
