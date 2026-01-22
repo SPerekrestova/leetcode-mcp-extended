@@ -114,6 +114,35 @@ async function authorizeLeetCode(
     }
 }
 
+async function getQuestionId(
+    problemSlug: string,
+    baseUrl: string,
+    credentials: LeetCodeCredentials
+): Promise<string> {
+    const graphqlQuery = {
+        query: `
+            query questionTitle($titleSlug: String!) {
+                question(titleSlug: $titleSlug) {
+                    questionId
+                    questionFrontendId
+                }
+            }
+        `,
+        variables: { titleSlug: problemSlug }
+    };
+
+    const response = await axios.post(`${baseUrl}/graphql`, graphqlQuery, {
+        headers: {
+            "Content-Type": "application/json",
+            Cookie: `csrftoken=${credentials.csrftoken}; LEETCODE_SESSION=${credentials.LEETCODE_SESSION}`,
+            "X-CSRFToken": credentials.csrftoken,
+            Referer: `${baseUrl}/problems/${problemSlug}/`
+        }
+    });
+
+    return response.data.data.question.questionId;
+}
+
 async function submitSolution(
     request: SubmissionRequest
 ): Promise<SubmissionResult> {
@@ -144,13 +173,25 @@ async function submitSolution(
             : "https://leetcode.com";
 
     try {
+        // First, get the numeric question ID
+        console.log("Fetching question ID for:", problemSlug);
+        const questionId = await getQuestionId(
+            problemSlug,
+            baseUrl,
+            credentials
+        );
+        console.log("Question ID:", questionId);
+
         const submitUrl = `${baseUrl}/problems/${problemSlug}/submit/`;
+
+        console.log("Submitting to:", submitUrl);
+        console.log("Language:", leetcodeLang);
 
         const submitResponse = await axios.post<LeetCodeSubmitResponse>(
             submitUrl,
             {
                 lang: leetcodeLang,
-                question_id: problemSlug,
+                question_id: questionId,
                 typed_code: code
             },
             {
@@ -158,10 +199,14 @@ async function submitSolution(
                     "Content-Type": "application/json",
                     Cookie: `csrftoken=${credentials.csrftoken}; LEETCODE_SESSION=${credentials.LEETCODE_SESSION}`,
                     "X-CSRFToken": credentials.csrftoken,
-                    Referer: `${baseUrl}/problems/${problemSlug}/`
+                    Referer: `${baseUrl}/problems/${problemSlug}/`,
+                    "User-Agent":
+                        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
                 }
             }
         );
+
+        console.log("Submission ID:", submitResponse.data.submission_id);
 
         const submissionId = submitResponse.data.submission_id;
 
@@ -224,6 +269,13 @@ async function submitSolution(
         if (axios.isAxiosError(error)) {
             const axiosError = error as AxiosError;
 
+            console.error("API Error Details:");
+            console.error("Status:", axiosError.response?.status);
+            console.error(
+                "Response:",
+                JSON.stringify(axiosError.response?.data, null, 2)
+            );
+
             if (axiosError.response?.status === 401) {
                 return {
                     accepted: false,
@@ -235,7 +287,7 @@ async function submitSolution(
             return {
                 accepted: false,
                 statusMessage: "Submission Failed",
-                errorMessage: axiosError.message
+                errorMessage: `${axiosError.message}. Response: ${JSON.stringify(axiosError.response?.data)}`
             };
         }
 

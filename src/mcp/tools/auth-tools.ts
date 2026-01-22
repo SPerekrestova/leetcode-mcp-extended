@@ -130,6 +130,35 @@ async function authorizeLeetCode(
     }
 }
 
+async function getQuestionId(
+    problemSlug: string,
+    baseUrl: string,
+    credentials: LeetCodeCredentials
+): Promise<string> {
+    const graphqlQuery = {
+        query: `
+            query questionTitle($titleSlug: String!) {
+                question(titleSlug: $titleSlug) {
+                    questionId
+                    questionFrontendId
+                }
+            }
+        `,
+        variables: { titleSlug: problemSlug }
+    };
+
+    const response = await axios.post(`${baseUrl}/graphql`, graphqlQuery, {
+        headers: {
+            "Content-Type": "application/json",
+            Cookie: `csrftoken=${credentials.csrftoken}; LEETCODE_SESSION=${credentials.LEETCODE_SESSION}`,
+            "X-CSRFToken": credentials.csrftoken,
+            Referer: `${baseUrl}/problems/${problemSlug}/`
+        }
+    });
+
+    return response.data.data.question.questionId;
+}
+
 async function submitSolution(
     request: SubmissionRequest
 ): Promise<SubmissionResult> {
@@ -162,6 +191,13 @@ async function submitSolution(
             : "https://leetcode.com";
 
     try {
+        // First, get the numeric question ID
+        const questionId = await getQuestionId(
+            problemSlug,
+            baseUrl,
+            credentials
+        );
+
         // Submit solution
         const submitUrl = `${baseUrl}/problems/${problemSlug}/submit/`;
 
@@ -169,7 +205,7 @@ async function submitSolution(
             submitUrl,
             {
                 lang: leetcodeLang,
-                question_id: problemSlug,
+                question_id: questionId,
                 typed_code: code
             },
             {
