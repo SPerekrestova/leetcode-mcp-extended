@@ -1,0 +1,31 @@
+# Source files
+src/
+*.ts
+!*.d.ts
+
+# Configuration files
+tsconfig.json
+.prettierrc
+.eslintrc.json
+eslint.config.js
+
+# Git files
+.git/
+.github/
+.gitignore
+
+# Development files
+node_modules/
+tests/
+test-manual.ts
+*.test.ts
+
+# Documentation
+docs/
+TESTING.md
+
+# Misc
+.DS_Store
+*.log
+.husky/
+.vscode/
