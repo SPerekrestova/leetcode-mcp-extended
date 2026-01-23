@@ -1,15 +1,19 @@
 {
-    "name": "@jinzcdev/leetcode-mcp-server",
-    "description": "MCP Server for LeetCode API (supports leetcode.com and leetcode.cn)",
-    "version": "1.2.0",
-    "author": "jinzcdev",
+    "name": "@sperekrestova/leetcode-mcp-extended",
+    "description": "Extended LeetCode MCP server with authorization and submission capabilities",
+    "version": "1.0.0",
+    "author": "SPerekrestova",
     "main": "./build/index.js",
     "keywords": [
         "leetcode",
         "lc",
         "mcp",
         "programming",
-        "algorithm"
+        "algorithm",
+        "authorization",
+        "submission",
+        "claude",
+        "practice"
     ],
     "scripts": {
         "test": "vitest run | pino-pretty",
@@ -21,7 +25,7 @@
         "prepare": "husky"
     },
     "bin": {
-        "leetcode-mcp-server": "build/index.js"
+        "leetcode-mcp-extended": "build/index.js"
     },
     "type": "module",
     "files": [
@@ -30,7 +34,7 @@
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/jinzcdev/leetcode-mcp-server.git"
+        "url": "git+https://github.com/SPerekrestova/leetcode-mcp-extended.git"
     },
     "lint-staged": {
         "*.{js,ts,jsx,tsx}": [

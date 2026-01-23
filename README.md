@@ -1,16 +1,20 @@
-# LeetCode MCP Server
+# LeetCode MCP Server Extended
 
-[![NPM Version](https://img.shields.io/npm/v/@jinzcdev/leetcode-mcp-server.svg)](https://www.npmjs.com/package/@jinzcdev/leetcode-mcp-server)
 [![GitHub License](https://img.shields.io/github/license/jinzcdev/leetcode-mcp-server.svg)](https://img.shields.io/github/license/jinzcdev/leetcode-mcp-server.svg)
-[![smithery badge](https://smithery.ai/badge/@jinzcdev/leetcode-mcp-server)](https://smithery.ai/server/@jinzcdev/leetcode-mcp-server)
-[![Chinese Doc](https://img.shields.io/badge/简体中文-点击查看-orange)](README_zh-CN.md)
-[![Stars](https://img.shields.io/github/stars/jinzcdev/leetcode-mcp-server)](https://github.com/jinzcdev/leetcode-mcp-server)
+[![Stars](https://img.shields.io/github/stars/SPerekrestova/leetcode-mcp-extended)](https://github.com/SPerekrestova/leetcode-mcp-extended)
 
 The LeetCode MCP Server is a [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) server that provides seamless integration with LeetCode APIs, enabling advanced automation and intelligent interaction with LeetCode's programming problems, contests, solutions, and user data.
 
-<a href="https://glama.ai/mcp/servers/@jinzcdev/leetcode-mcp-server">
-  <img width="380" height="200" src="https://glama.ai/mcp/servers/@jinzcdev/leetcode-mcp-server/badge" alt="LeetCode Server MCP server" />
-</a>
+## 🚀 Extensions
+
+This fork extends the original [@jinzcdev/leetcode-mcp-server](https://github.com/jinzcdev/leetcode-mcp-server) with:
+
+- **One-time Authorization**: Browser-based login flow with automatic credential storage
+- **Solution Submission**: Submit code and receive real-time results with detailed feedback
+- **Multi-language Support**: Java, Python, C++, JavaScript, TypeScript
+- **Session Management**: Automatic credential persistence and session handling
+
+Perfect for conversational LeetCode practice with Claude Code!
 
 ## Features
 
@@ -28,42 +32,95 @@ The LeetCode MCP Server is a [Model Context Protocol (MCP)](https://modelcontext
 
 ## Installation
 
-### Installing via Smithery
-
-To install leetcode-mcp-server for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@jinzcdev/leetcode-mcp-server):
+### Clone and Build
 
 ```bash
-npx -y @smithery/cli install @jinzcdev/leetcode-mcp-server --client claude
-```
-
-### Manual Installation
-
-```bash
-# Install from npm
-npm install @jinzcdev/leetcode-mcp-server -g
-
-# Or run with Global site configuration
-npx -y @jinzcdev/leetcode-mcp-server --site global
-
-# Run with authentication (for accessing private data)
-npx -y @jinzcdev/leetcode-mcp-server --site global --session <YOUR_LEETCODE_SESSION_COOKIE>
-```
-
-Alternatively, you can clone the repository and run it locally:
-
-```bash
-# Clone the repository
-git clone https://github.com/jinzcdev/leetcode-mcp-server.git
+# Clone the extended repository
+git clone https://github.com/SPerekrestova/leetcode-mcp-extended.git
 
 # Navigate to the project directory
-cd leetcode-mcp-server
+cd leetcode-mcp-extended
 
-# Build the project
+# Install dependencies and build
 npm install && npm run build
-
-# Run the server
-node build/index.js --site global
 ```
+
+### Configuration for Claude Code
+
+Add to your Claude Code MCP configuration file (typically `~/.config/claude-code/mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "leetcode-extended": {
+      "command": "node",
+      "args": [
+        "/path/to/leetcode-mcp-extended/build/index.js",
+        "--site",
+        "global"
+      ]
+    }
+  }
+}
+```
+
+Replace `/path/to/leetcode-mcp-extended` with the actual path where you cloned the repository.
+
+### Optional: Install Globally
+
+For easier access, you can link the package globally:
+
+```bash
+npm link
+```
+
+Then update your MCP configuration to use the global command:
+
+```json
+{
+  "mcpServers": {
+    "leetcode-extended": {
+      "command": "leetcode-mcp-extended",
+      "args": ["--site", "global"]
+    }
+  }
+}
+```
+
+## First-Time Setup
+
+After installation, authorize with LeetCode to enable submission capabilities:
+
+### Using Claude Code
+
+Simply ask Claude to authorize:
+
+```
+You: "Authorize with LeetCode"
+Claude: [Opens browser for login]
+You: [Log in to LeetCode]
+Claude: "✓ Successfully authorized!"
+```
+
+Credentials are automatically saved to `~/.leetcode-mcp/credentials.json` and will be reused for all future submissions.
+
+### Manual Testing
+
+You can also test authorization manually:
+
+```bash
+cd leetcode-mcp-extended
+npm run build
+node build/index.js
+# Then use the authorize_leetcode tool
+```
+
+> [!NOTE]
+>
+> - Authorization is only required once (or when your session expires)
+> - Session cookies typically remain valid for weeks/months
+> - Re-authorization is only needed when you see "Session expired" errors
+> - Credentials are stored locally and never transmitted except to LeetCode
 
 ## Usage
 
@@ -131,6 +188,13 @@ For LeetCode China site, modify the `--site` parameter to `cn`.
 
 ## Available Tools
 
+### Authorization & Submission
+
+| Tool                   | Global | CN  | Auth Required | Description                                                       |
+| ---------------------- | :----: | :-: | :-----------: | ----------------------------------------------------------------- |
+| **authorize_leetcode** |   ✅   | ✅  |      ❌       | Launch browser for one-time LeetCode login and credential storage |
+| **submit_solution**    |   ✅   | ❌  |      ✅       | Submit a solution to a LeetCode problem and get real-time results |
+
 ### Problems
 
 | Tool                    | Global | CN  | Auth Required | Description                                                  |
@@ -169,6 +233,68 @@ For LeetCode China site, modify the `--site` parameter to `cn`.
 | **get_problem_solution**   |   ✅   | ✅  |      ❌       | Retrieves the complete content of a specific solution          |
 
 ## Tool Parameters
+
+### Authorization & Submission
+
+- **authorize_leetcode** - Launch browser for one-time LeetCode login. Credentials saved for all future operations.
+
+  - `site`: LeetCode site to authorize with (enum: "global", "cn", optional, default: "global")
+
+  **Example Response (Success):**
+
+  ```json
+  {
+    "success": true,
+    "message": "Successfully authorized with LeetCode! Credentials saved."
+  }
+  ```
+
+  **Example Response (Failure):**
+
+  ```json
+  {
+    "success": false,
+    "message": "Login timeout. Please try again.",
+    "error": "User did not complete login within 90 seconds"
+  }
+  ```
+
+- **submit_solution** - Submit a solution to a LeetCode problem and get results
+
+  - `problemSlug`: The problem slug/identifier (e.g., "two-sum") (string, required)
+  - `code`: The solution code to submit (string, required)
+  - `language`: Programming language (enum: "java", "python", "python3", "cpp", "c++", "javascript", "js", "typescript", "ts", required)
+
+  **Example Response (Accepted):**
+
+  ```json
+  {
+    "accepted": true,
+    "runtime": "2 ms",
+    "memory": "44.5 MB",
+    "statusMessage": "Accepted"
+  }
+  ```
+
+  **Example Response (Wrong Answer):**
+
+  ```json
+  {
+    "accepted": false,
+    "statusMessage": "Wrong Answer",
+    "failedTestCase": "Input: [3,2,4]\nExpected: [1,2]\nGot: [0,1]"
+  }
+  ```
+
+  **Example Response (Authorization Required):**
+
+  ```json
+  {
+    "accepted": false,
+    "errorMessage": "Not authorized. Please run authorization first.",
+    "statusMessage": "Authorization Required"
+  }
+  ```
 
 ### Problems
 
@@ -313,11 +439,235 @@ For LeetCode China site, modify the `--site` parameter to `cn`.
 
 ## Authentication
 
-User-specific data access requires LeetCode session authentication:
+### Recommended: Browser-Based Authorization (Extended Feature)
+
+The easiest way to authorize is using the `authorize_leetcode` tool:
+
+1. Ask Claude: "Authorize with LeetCode"
+2. Browser opens automatically
+3. Log in to LeetCode
+4. Credentials saved automatically
+
+### Alternative: Manual Cookie Configuration
+
+For read-only operations, you can manually configure the session cookie:
 
 1. Log in to LeetCode ([Global](https://leetcode.com) or [China](https://leetcode.cn) site)
 2. Extract `LEETCODE_SESSION` cookie from browser developer tools
 3. Configure server with `--session` flag or `LEETCODE_SESSION` environment variable
+
+> [!TIP]
+> The browser-based authorization method is recommended as it:
+>
+> - Eliminates manual cookie extraction
+> - Automatically refreshes credentials
+> - Stores credentials securely for reuse
+> - Enables submission capabilities
+
+## Complete Usage Guide
+
+### 1. First-Time Setup
+
+After installation, authorize once to enable submission features:
+
+```
+You: "Set up LeetCode for me"
+Claude: [Opens browser for authorization]
+You: [Log in to LeetCode]
+Claude: "✓ Authorized!"
+```
+
+Credentials are saved to `~/.leetcode-mcp/credentials.json` and automatically reused.
+
+### 2. Practice Workflow
+
+#### Get a Problem
+
+```
+You: "I want to practice the two-sum problem"
+Claude: [Fetches problem details, shows description and examples]
+```
+
+#### Write Your Solution
+
+Write your code in your preferred editor. When you need help:
+
+```
+You: "Can you give me a hint for two-sum?"
+Claude: [Provides contextual guidance]
+```
+
+#### Submit Your Solution
+
+```
+You: "Submit this solution: [paste your code]"
+Claude: [Submits code, returns results]
+```
+
+**Example submission:**
+
+```
+You: "Submit this Java solution for two-sum:
+class Solution {
+    public int[] twoSum(int[] nums, int target) {
+        Map<Integer, Integer> map = new HashMap<>();
+        for (int i = 0; i < nums.length; i++) {
+            int complement = target - nums[i];
+            if (map.containsKey(complement)) {
+                return new int[] { map.get(complement), i };
+            }
+            map.put(nums[i], i);
+        }
+        return new int[] {};
+    }
+}"
+
+Claude: "🎉 Accepted! Runtime: 2 ms, Memory: 44.5 MB"
+```
+
+### 3. Tips & Best Practices
+
+- **Authorization:** Only needed once (or when session expires after weeks/months)
+- **Language Support:** Java, Python, C++, JavaScript, TypeScript
+- **Failed Submissions:** Automatically shows test case details for debugging
+- **Daily Challenges:** Use `get_daily_challenge` to fetch today's problem
+- **Problem Search:** Use `search_problems` with filters for difficulty, tags, keywords
+
+### 4. Conversational Examples
+
+#### Getting Started
+
+```
+You: "Show me today's daily challenge"
+Claude: [Fetches and displays daily problem]
+
+You: "I'll solve it in Python"
+[Write your solution]
+
+You: "Submit my solution: [code]"
+Claude: [Shows results]
+```
+
+#### Debugging Failed Submissions
+
+```
+You: "Submit my solution for valid-parentheses: [code]"
+Claude: "Wrong Answer - Input: '([)]', Expected: false, Got: true"
+
+You: "Why did it fail?"
+Claude: [Explains the edge case and suggests fix]
+
+You: "Submit updated solution: [fixed code]"
+Claude: "✓ Accepted!"
+```
+
+#### Exploring Problems
+
+```
+You: "Find me medium-difficulty array problems"
+Claude: [Lists matching problems]
+
+You: "Tell me about the 'container-with-most-water' problem"
+Claude: [Shows problem details]
+```
+
+## Troubleshooting
+
+### Authorization Issues
+
+**Problem:** Browser doesn't open
+
+```bash
+# Install Playwright browsers
+npx playwright install chromium
+```
+
+**Problem:** "Login timeout" error
+
+- Login must complete within 90 seconds
+- Check browser allows automated control
+- Try again with `authorize_leetcode` tool
+
+**Problem:** "Failed to extract cookies"
+
+- Ensure you fully completed login (reached LeetCode homepage)
+- Check browser didn't block cookie access
+
+### Submission Issues
+
+**Problem:** "Not authorized" error
+
+```
+You: "Authorize with LeetCode"
+# Complete login flow
+```
+
+**Problem:** "Unsupported language" error
+
+- Supported: `java`, `python`, `python3`, `cpp`, `c++`, `javascript`, `js`, `typescript`, `ts`
+- Language names are case-insensitive
+- Use exact names from the list
+
+**Problem:** "Session expired" error
+
+- Sessions typically last weeks/months
+- Re-authorize when prompted:
+  ```
+  You: "Authorize with LeetCode"
+  ```
+
+**Problem:** Submission timeout
+
+- LeetCode processing may be slow
+- Wait 30 seconds for automatic timeout
+- Check internet connection
+- Retry submission
+
+### MCP Server Issues
+
+**Problem:** Tools not appearing in Claude Code
+
+1. Verify MCP configuration file path
+2. Check absolute path to `build/index.js` is correct
+3. Restart Claude Code
+4. Test server manually:
+   ```bash
+   node build/index.js --site global
+   ```
+
+**Problem:** Server crashes or fails to start
+
+```bash
+# Rebuild project
+npm run build
+
+# Check for errors
+npm run build 2>&1 | grep error
+
+# Verify Node.js version
+node --version  # Should be v20.x or above
+```
+
+**Problem:** "Module not found" errors
+
+```bash
+# Reinstall dependencies
+rm -rf node_modules package-lock.json
+npm install
+npm run build
+```
+
+### Testing Issues
+
+**Problem:** Tests fail
+
+```bash
+# Run tests with verbose output
+npm test
+
+# Run specific test file
+npx vitest run tests/utils/credentials.test.ts
+```
 
 ## Response Format
 
@@ -336,6 +686,39 @@ All tools return JSON-formatted responses with the following structure:
 
 The `JSON_DATA_STRING` contains either the requested data or an error message for failed requests.
 
+## Contributing
+
+Contributions are welcome! Please feel free to submit issues or pull requests.
+
+### Development Setup
+
+```bash
+git clone https://github.com/SPerekrestova/leetcode-mcp-extended.git
+cd leetcode-mcp-extended
+npm install
+npm run build
+npm test
+```
+
+### Testing
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Build and test
+npm run build && npm test
+```
+
 ## License
 
 This project is licensed under the MIT License.
+
+## Acknowledgments
+
+- **Original Project:** [@jinzcdev/leetcode-mcp-server](https://github.com/jinzcdev/leetcode-mcp-server)
+- **MCP Protocol:** [Anthropic Model Context Protocol](https://modelcontextprotocol.io/)
+- **LeetCode:** Platform for coding practice
