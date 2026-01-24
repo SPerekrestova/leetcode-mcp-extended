@@ -86,10 +86,7 @@ async function main() {
     });
 
     const leetcodeService: LeetCodeBaseService =
-        await LeetCodeServiceFactory.createService(
-            options.site,
-            options.session
-        );
+        await LeetCodeServiceFactory.createService(options.session);
 
     registerProblemTools(server, leetcodeService);
     registerUserTools(server, leetcodeService);
