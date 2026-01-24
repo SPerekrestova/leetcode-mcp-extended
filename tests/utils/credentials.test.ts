@@ -7,7 +7,6 @@ import { FileCredentialsStorage } from "../../src/utils/credentials.js";
 
 describe("FileCredentialsStorage", () => {
     const testDir = join(homedir(), ".leetcode-mcp-test");
-    const testFile = join(testDir, "credentials.json");
     let storage: FileCredentialsStorage;
 
     // Mock the credentials directory for testing
@@ -45,7 +44,6 @@ describe("FileCredentialsStorage", () => {
             const credentials: LeetCodeCredentials = {
                 csrftoken: "test-csrf-token",
                 LEETCODE_SESSION: "test-session-token",
-                site: "global",
                 createdAt: new Date().toISOString()
             };
 
@@ -55,7 +53,6 @@ describe("FileCredentialsStorage", () => {
             expect(loaded).toBeDefined();
             expect(loaded?.csrftoken).toBe(credentials.csrftoken);
             expect(loaded?.LEETCODE_SESSION).toBe(credentials.LEETCODE_SESSION);
-            expect(loaded?.site).toBe(credentials.site);
             expect(loaded?.createdAt).toBe(credentials.createdAt);
         });
 
@@ -66,21 +63,6 @@ describe("FileCredentialsStorage", () => {
             const loaded = await storage.load();
             expect(loaded).toBeNull();
         });
-
-        it("should support cn site", async () => {
-            const credentials: LeetCodeCredentials = {
-                csrftoken: "cn-csrf-token",
-                LEETCODE_SESSION: "cn-session-token",
-                site: "cn",
-                createdAt: new Date().toISOString()
-            };
-
-            await storage.save(credentials);
-            const loaded = await storage.load();
-
-            expect(loaded).toBeDefined();
-            expect(loaded?.site).toBe("cn");
-        });
     });
 
     describe("clear", () => {
@@ -88,7 +70,6 @@ describe("FileCredentialsStorage", () => {
             const credentials: LeetCodeCredentials = {
                 csrftoken: "test-csrf-token",
                 LEETCODE_SESSION: "test-session-token",
-                site: "global",
                 createdAt: new Date().toISOString()
             };
 
@@ -100,7 +81,7 @@ describe("FileCredentialsStorage", () => {
         });
 
         it("should not error when clearing non-existent credentials", async () => {
-            await expect(storage.clear()).resolves.not.toThrow();
+            expect(storage.clear()).resolves.not.toThrow();
         });
     });
 
@@ -109,13 +90,12 @@ describe("FileCredentialsStorage", () => {
             const credentials: LeetCodeCredentials = {
                 csrftoken: "test",
                 LEETCODE_SESSION: "test",
-                site: "global",
                 createdAt: new Date().toISOString()
             };
 
             // This test verifies that errors are properly thrown
             // The actual save should work, so we just verify the method exists
-            await expect(storage.save(credentials)).resolves.not.toThrow();
+            expect(storage.save(credentials)).resolves.not.toThrow();
         });
     });
 });

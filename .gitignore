@@ -85,3 +85,5 @@ docs/
 
 build/
 .vscode/settings.json
+.idea
+/.idea

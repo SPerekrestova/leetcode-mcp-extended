@@ -29,3 +29,4 @@ TESTING.md
 *.log
 .husky/
 .vscode/
+.idea/

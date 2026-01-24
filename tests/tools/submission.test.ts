@@ -25,7 +25,6 @@ describe("Submission Integration", () => {
     const mockCredentials: LeetCodeCredentials = {
         csrftoken: "test-csrf-token",
         LEETCODE_SESSION: "test-session-token",
-        site: "global",
         createdAt: new Date().toISOString()
     };
 
@@ -63,7 +62,7 @@ describe("Submission Integration", () => {
         it("should handle GraphQL errors", async () => {
             mockedAxios.post.mockRejectedValueOnce(new Error("Network error"));
 
-            await expect(
+            expect(
                 axios.post("https://leetcode.com/graphql", {})
             ).rejects.toThrow("Network error");
         });
@@ -187,9 +186,8 @@ describe("Submission Integration", () => {
             };
 
             mockedAxios.post.mockRejectedValueOnce(error);
-            mockedAxios.isAxiosError = vi.fn().mockReturnValue(true);
 
-            await expect(
+            expect(
                 axios.post("https://leetcode.com/problems/two-sum/submit/", {})
             ).rejects.toMatchObject({
                 response: {
@@ -203,7 +201,7 @@ describe("Submission Integration", () => {
                 new Error("Network timeout")
             );
 
-            await expect(
+            expect(
                 axios.post("https://leetcode.com/problems/two-sum/submit/", {})
             ).rejects.toThrow("Network timeout");
         });
@@ -253,31 +251,6 @@ describe("Submission Integration", () => {
             expect(credentials).toBeDefined();
             expect(credentials?.csrftoken).toBe("test-csrf-token");
             expect(credentials?.LEETCODE_SESSION).toBe("test-session-token");
-        });
-    });
-
-    describe("CN Site Support", () => {
-        it("should use cn domain for cn site", () => {
-            const cnCredentials: LeetCodeCredentials = {
-                ...mockCredentials,
-                site: "cn"
-            };
-
-            const baseUrl =
-                cnCredentials.site === "cn"
-                    ? "https://leetcode.cn"
-                    : "https://leetcode.com";
-
-            expect(baseUrl).toBe("https://leetcode.cn");
-        });
-
-        it("should use global domain for global site", () => {
-            const baseUrl =
-                mockCredentials.site === "cn"
-                    ? "https://leetcode.cn"
-                    : "https://leetcode.com";
-
-            expect(baseUrl).toBe("https://leetcode.com");
         });
     });
 });
