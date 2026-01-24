@@ -41,29 +41,29 @@ npm link
 
 ## Configuration
 
-### Claude Code
+### Claude Code & Claude Desktop
 
-Add to your MCP configuration file (`~/.config/claude-code/mcp.json`):
+Add to your MCP configuration file (`~/.config/claude-code/mcp.json`) or (`~/Library/Application Support/Claude/claude_desktop_config.json`):
 
 ```json
 {
   "mcpServers": {
     "leetcode": {
-      "command": "interactive-leetcode-mcp"
+      "command": "npx",
+      "args": ["-y", "interactive-leetcode-mcp"]
     }
   }
 }
 ```
 
-### Claude Desktop
-
-Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%/Claude/claude_desktop_config.json` (Windows):
+### Local build
 
 ```json
 {
   "mcpServers": {
     "leetcode": {
-      "command": "interactive-leetcode-mcp"
+      "command": "node",
+      "args": ["/path/to/this/project/interactive-leetcode-mcp/build/index.js"]
     }
   }
 }

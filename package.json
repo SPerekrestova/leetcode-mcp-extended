@@ -1,7 +1,7 @@
 {
-    "name": "@sperekrestova/leetcode-mcp-extended",
-    "description": "Extended LeetCode MCP server with authorization and submission capabilities",
-    "version": "1.0.0",
+    "name": "@sperekrestova/interactive-leetcode-mcp",
+    "description": "Interactive LeetCode MCP server with authorization and submission capabilities for seamless problem-solving with Claude",
+    "version": "2.0.0",
     "author": "SPerekrestova",
     "main": "./build/index.js",
     "keywords": [
@@ -25,17 +25,25 @@
         "prepare": "husky"
     },
     "bin": {
-        "leetcode-mcp-extended": "build/index.js"
+        "interactive-leetcode-mcp": "build/index.js"
     },
     "type": "module",
     "files": [
         "build"
     ],
     "license": "MIT",
+    "engines": {
+        "node": ">=20.0.0"
+    },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/SPerekrestova/leetcode-mcp-extended.git"
+        "url": "git+https://github.com/SPerekrestova/interactive-leetcode-mcp.git"
     },
+    "bugs": {
+        "url": "https://github.com/SPerekrestova/interactive-leetcode-mcp/issues"
+    },
+    "homepage": "https://github.com/SPerekrestova/interactive-leetcode-mcp#readme",
+    "types": "./build/index.d.ts",
     "lint-staged": {
         "*.{js,ts,jsx,tsx}": [
             "prettier --write",
