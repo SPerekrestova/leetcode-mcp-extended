@@ -2,7 +2,15 @@ name: Publish Package
 
 on:
   release:
-    types: [published]
+    tags:
+      - "v*"
+
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish (leave empty to use package.json version)"
+        required: false
+        type: string
 
 permissions:
   id-token: write # Required for OIDC
