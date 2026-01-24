@@ -8,7 +8,11 @@ import { ToolRegistry } from "./tool-registry.js";
  * This class manages tools for accessing user profiles, submissions, and progress data.
  */
 export class UserToolRegistry extends ToolRegistry {
-    protected registerCommon(): void {
+    protected get requiresAuthentication(): boolean {
+        return true;
+    }
+
+    protected registerGlobal(): void {
         // User profile tool
         this.server.tool(
             "get_user_profile",
@@ -36,9 +40,7 @@ export class UserToolRegistry extends ToolRegistry {
                 };
             }
         );
-    }
 
-    protected registerGlobal(): void {
         // Recent submissions tool (Global-specific)
         this.server.tool(
             "get_recent_submissions",
@@ -145,9 +147,9 @@ export class UserToolRegistry extends ToolRegistry {
     }
 
     /**
-     * Registers common tools that require authentication and are available on both Global and CN platforms.
+     * Registers tools specific to the Global LeetCode site that require authentication.
      */
-    protected registerAuthenticatedCommon(): void {
+    protected override registerAuthenticatedGlobal(): void {
         // User status tool (requires authentication)
         this.server.tool(
             "get_user_status",
@@ -288,12 +290,7 @@ export class UserToolRegistry extends ToolRegistry {
                 }
             }
         );
-    }
 
-    /**
-     * Registers tools specific to the Global LeetCode site that require authentication.
-     */
-    protected registerAuthenticatedGlobal(): void {
         // Global user submissions tool (requires authentication)
         this.server.tool(
             "get_all_submissions",

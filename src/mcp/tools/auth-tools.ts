@@ -301,7 +301,7 @@ async function submitSolution(
  * Auth tool registry class that handles registration of LeetCode authentication tools.
  */
 export class AuthToolRegistry extends ToolRegistry {
-    protected registerCommon(): void {
+    protected registerGlobal(): void {
         // Authorization tool
         this.server.tool(
             "authorize_leetcode",
@@ -361,14 +361,6 @@ export class AuthToolRegistry extends ToolRegistry {
                 };
             }
         );
-    }
-
-    protected registerGlobal(): void {
-        // No global-specific auth tools
-    }
-
-    protected registerCN(): void {
-        // No CN-specific auth tools
     }
 }
 
