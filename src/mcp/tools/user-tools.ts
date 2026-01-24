@@ -1,6 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { PROGRAMMING_LANGS } from "../../common/constants.js";
 import { LeetCodeBaseService } from "../../leetcode/leetcode-base-service.js";
 import { ToolRegistry } from "./tool-registry.js";
 
@@ -135,60 +134,6 @@ export class UserToolRegistry extends ToolRegistry {
                                 type: "text",
                                 text: JSON.stringify({
                                     error: "Failed to fetch recent submissions",
-                                    message: error.message
-                                })
-                            }
-                        ]
-                    };
-                }
-            }
-        );
-    }
-
-    protected registerChina(): void {
-        // User recent AC submissions tool (CN-specific)
-        this.server.tool(
-            "get_recent_ac_submissions",
-            "Retrieves a user's recent accepted (AC) submissions on LeetCode China, with details about each successfully solved problem",
-            {
-                username: z
-                    .string()
-                    .describe(
-                        "LeetCode China username to retrieve recent accepted submissions for"
-                    ),
-                limit: z
-                    .number()
-                    .optional()
-                    .default(10)
-                    .describe(
-                        "Maximum number of accepted submissions to return (optional, defaults to server-defined limit)"
-                    )
-            },
-            async ({ username, limit }) => {
-                try {
-                    const data =
-                        await this.leetcodeService.fetchUserRecentACSubmissions(
-                            username,
-                            limit
-                        );
-                    return {
-                        content: [
-                            {
-                                type: "text",
-                                text: JSON.stringify({
-                                    username,
-                                    acSubmissions: data
-                                })
-                            }
-                        ]
-                    };
-                } catch (error: any) {
-                    return {
-                        content: [
-                            {
-                                type: "text",
-                                text: JSON.stringify({
-                                    error: "Failed to fetch recent AC submissions",
                                     message: error.message
                                 })
                             }
@@ -389,88 +334,6 @@ export class UserToolRegistry extends ToolRegistry {
                                     problem: questionSlug,
                                     submissions: submissions
                                 })
-                            }
-                        ]
-                    };
-                } catch (error: any) {
-                    return {
-                        content: [
-                            {
-                                type: "text",
-                                text: JSON.stringify({
-                                    error: "Failed to fetch user submissions",
-                                    message: error.message
-                                })
-                            }
-                        ]
-                    };
-                }
-            }
-        );
-    }
-
-    /**
-     * Registers tools specific to the China LeetCode site that require authentication.
-     */
-    protected registerAuthenticatedChina(): void {
-        // China user submissions tool (requires authentication, enhanced version with more parameters)
-        this.server.tool(
-            "get_all_submissions",
-            "Retrieves a list of the current user's submissions on LeetCode China with extensive filtering options, including pagination support via lastKey parameter (requires authentication)",
-            {
-                limit: z
-                    .number()
-                    .default(20)
-                    .describe(
-                        "Maximum number of submissions to return per page (typically defaults to 20 if not specified)"
-                    ),
-                offset: z
-                    .number()
-                    .default(0)
-                    .describe(
-                        "Number of submissions to skip for pagination purposes"
-                    ),
-                questionSlug: z
-                    .string()
-                    .optional()
-                    .describe(
-                        "Optional problem identifier (slug) to filter submissions for a specific problem (e.g., 'two-sum'); if omitted, returns submissions across all problems"
-                    ),
-                lang: z
-                    .enum(PROGRAMMING_LANGS as [string])
-                    .optional()
-                    .describe(
-                        "Programming language filter to show only submissions in a specific language (e.g., 'python3', 'java', 'cpp')"
-                    ),
-                status: z
-                    .enum(["AC", "WA"])
-                    .optional()
-                    .describe(
-                        "Submission status filter (e.g., 'AC' for Accepted, 'WA' for Wrong Answer) to show only submissions with that status; if omitted, returns all submissions"
-                    ),
-                lastKey: z
-                    .string()
-                    .optional()
-                    .describe(
-                        "Pagination token from a previous request used to retrieve the next page of results"
-                    )
-            },
-            async ({ questionSlug, limit, offset, lang, status, lastKey }) => {
-                try {
-                    const submissions =
-                        await this.leetcodeService.fetchUserAllSubmissions({
-                            offset,
-                            limit,
-                            questionSlug,
-                            lang,
-                            status,
-                            lastKey
-                        });
-                    return {
-                        content: [
-                            {
-                                type: "text",
-                                text: JSON.stringify(submissions)
                             }
                         ]
                     };

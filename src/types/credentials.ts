@@ -1,7 +1,6 @@
 export interface LeetCodeCredentials {
     csrftoken: string;
     LEETCODE_SESSION: string;
-    site: "global" | "cn";
     createdAt: string;
 }
 
