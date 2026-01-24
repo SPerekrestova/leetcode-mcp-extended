@@ -15,7 +15,7 @@ import { ResourceRegistry } from "./resource-registry.js";
  * This class manages resources for accessing problem details, categories, tags, and supported languages.
  */
 export class ProblemResourceRegistry extends ResourceRegistry {
-    protected registerCommon(): void {
+    protected registerGlobal(): void {
         // Problem Categories resource
         this.server.resource(
             "problem-categories",

@@ -9,7 +9,7 @@ import { ToolRegistry } from "./tool-registry.js";
  * This class manages tools for accessing problem details, searching problems, and daily challenges.
  */
 export class ProblemToolRegistry extends ToolRegistry {
-    protected registerCommon(): void {
+    protected registerGlobal(): void {
         // Daily challenge tool
         this.server.tool(
             "get_daily_challenge",

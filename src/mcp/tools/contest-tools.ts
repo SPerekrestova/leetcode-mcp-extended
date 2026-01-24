@@ -8,7 +8,7 @@ import { ToolRegistry } from "./tool-registry.js";
  * This class manages tools for accessing contest rankings, history, and user performance in contests.
  */
 export class ContestToolRegistry extends ToolRegistry {
-    protected registerCommon(): void {
+    protected registerGlobal(): void {
         // User contest ranking tool
         this.server.tool(
             "get_user_contest_ranking",
