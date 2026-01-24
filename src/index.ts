@@ -20,14 +20,13 @@ import logger from "./utils/logger.js";
 /**
  * Parses and validates command line arguments for the LeetCode MCP Server.
  *
- * @returns Configuration object with site and optional session information
+ * @returns Configuration object with optional session information
  */
 function parseArgs() {
     const args = minimist(process.argv.slice(2), {
-        string: ["site", "session"],
+        string: ["session"],
         boolean: ["help"],
         alias: {
-            s: "site",
             c: "session",
             h: "help"
         }
@@ -39,21 +38,14 @@ function parseArgs() {
   Usage: leetcode-mcp-server [options]
 
   Options:
-    --site, -s <site>          LeetCode API site: 'global' (leetcode.com) or 'cn' (leetcode.cn), default is 'global'
     --session, -c <cookie>     Optional LeetCode session cookie for authenticated requests
     --help, -h                 Show this help message`);
         process.exit(0);
     }
 
     const options = {
-        site: args.site || process.env.LEETCODE_SITE || "global",
         session: args.session || process.env.LEETCODE_SESSION
     };
-
-    if (options.site !== "global" && options.site !== "cn") {
-        logger.error("The site must be either 'global' or 'cn'");
-        process.exit(1);
-    }
 
     return options;
 }
