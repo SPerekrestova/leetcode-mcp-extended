@@ -1,8 +1,8 @@
 import { Credential, LeetCode } from "leetcode-query";
 import logger from "../utils/logger.js";
-import { SEARCH_PROBLEMS_QUERY } from "./graphql/global/search-problems.js";
-import { SOLUTION_ARTICLE_DETAIL_QUERY } from "./graphql/global/solution-article-detail.js";
-import { SOLUTION_ARTICLES_QUERY } from "./graphql/global/solution-articles.js";
+import { SEARCH_PROBLEMS_QUERY } from "./graphql/search-problems.js";
+import { SOLUTION_ARTICLE_DETAIL_QUERY } from "./graphql/solution-article-detail.js";
+import { SOLUTION_ARTICLES_QUERY } from "./graphql/solution-articles.js";
 import { LeetCodeBaseService } from "./leetcode-base-service.js";
 
 /**

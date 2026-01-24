@@ -41,7 +41,7 @@ describe("LeetCode Problem Services", () => {
 
             it("should handle invalid problems correctly", async () => {
                 const invalidSlug = `invalid-problem-${Date.now()}`;
-                await expect(
+                expect(
                     service.fetchProblemSimplified(invalidSlug)
                 ).rejects.toThrow(`Problem ${invalidSlug} not found`);
             }, 30000);

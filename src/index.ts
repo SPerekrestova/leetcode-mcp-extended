@@ -20,15 +20,12 @@ import logger from "./utils/logger.js";
 /**
  * Parses and validates command line arguments for the LeetCode MCP Server.
  *
- * @returns Configuration object with site and optional session information
+ * @returns Configuration object
  */
 function parseArgs() {
     const args = minimist(process.argv.slice(2), {
-        string: ["site", "session"],
         boolean: ["help"],
         alias: {
-            s: "site",
-            c: "session",
             h: "help"
         }
     });
@@ -39,23 +36,11 @@ function parseArgs() {
   Usage: leetcode-mcp-server [options]
 
   Options:
-    --site, -s <site>          LeetCode API site: 'global' (leetcode.com) or 'cn' (leetcode.cn), default is 'global'
-    --session, -c <cookie>     Optional LeetCode session cookie for authenticated requests
     --help, -h                 Show this help message`);
         process.exit(0);
     }
 
-    const options = {
-        site: args.site || process.env.LEETCODE_SITE || "global",
-        session: args.session || process.env.LEETCODE_SESSION
-    };
-
-    if (options.site !== "global" && options.site !== "cn") {
-        logger.error("The site must be either 'global' or 'cn'");
-        process.exit(1);
-    }
-
-    return options;
+    return {};
 }
 
 /**
@@ -77,7 +62,7 @@ function getPackageJson() {
  * registers all tools and resources, and connects the server to the stdio transport.
  */
 async function main() {
-    const options = parseArgs();
+    parseArgs(); // Handle --help flag
     const packageJSON = getPackageJson();
 
     const server = new McpServer({
@@ -86,7 +71,7 @@ async function main() {
     });
 
     const leetcodeService: LeetCodeBaseService =
-        await LeetCodeServiceFactory.createService(options.session);
+        await LeetCodeServiceFactory.createService();
 
     registerProblemTools(server, leetcodeService);
     registerUserTools(server, leetcodeService);
