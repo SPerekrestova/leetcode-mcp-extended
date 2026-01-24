@@ -37,9 +37,7 @@ interface AuthorizationResult {
     error?: string;
 }
 
-async function authorizeLeetCode(
-    site: "global" | "cn" = "global"
-): Promise<AuthorizationResult> {
+async function authorizeLeetCode(): Promise<AuthorizationResult> {
     let browser: Browser | null = null;
 
     try {
@@ -48,10 +46,7 @@ async function authorizeLeetCode(
         const context = await browser.newContext();
         const page = await context.newPage();
 
-        const loginUrl =
-            site === "cn"
-                ? "https://leetcode.cn/accounts/login/"
-                : LEETCODE_LOGIN_URL;
+        const loginUrl = LEETCODE_LOGIN_URL;
 
         // Navigate to login page
         await page.goto(loginUrl);
@@ -105,7 +100,6 @@ async function authorizeLeetCode(
         const credentials: LeetCodeCredentials = {
             csrftoken: csrfCookie.value,
             LEETCODE_SESSION: sessionCookie.value,
-            site,
             createdAt: new Date().toISOString()
         };
 
@@ -185,10 +179,7 @@ async function submitSolution(
         };
     }
 
-    const baseUrl =
-        credentials.site === "cn"
-            ? "https://leetcode.cn"
-            : "https://leetcode.com";
+    const baseUrl = "https://leetcode.com";
 
     try {
         // First, get the numeric question ID
@@ -315,14 +306,9 @@ export class AuthToolRegistry extends ToolRegistry {
         this.server.tool(
             "authorize_leetcode",
             "Authorize with LeetCode by launching a browser for one-time login. Saves credentials for future use.",
-            {
-                site: z
-                    .enum(["global", "cn"])
-                    .default("global")
-                    .describe("LeetCode site to authorize with (global or cn)")
-            },
-            async ({ site }) => {
-                const result = await authorizeLeetCode(site);
+            {},
+            async () => {
+                const result = await authorizeLeetCode();
                 return {
                     content: [
                         {
