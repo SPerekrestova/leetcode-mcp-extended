@@ -6,12 +6,12 @@
         "url": "https://github.com/SPerekrestova/interactive-leetcode-mcp",
         "source": "github"
     },
-    "version": "2.0.2",
+    "version": "3.0.0",
     "packages": [
         {
             "registryType": "npm",
             "identifier": "@sperekrestova/interactive-leetcode-mcp",
-            "version": "2.0.2",
+            "version": "3.0.0",
             "transport": {
                 "type": "stdio"
             },
