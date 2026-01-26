@@ -7,6 +7,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { LeetCodeBaseService } from "./leetcode/leetcode-base-service.js";
 import { LeetCodeServiceFactory } from "./leetcode/leetcode-service-factory.js";
+import { registerLearningPrompts } from "./mcp/prompts/learning-prompts.js";
 import { registerProblemResources } from "./mcp/resources/problem-resources.js";
 import { registerSolutionResources } from "./mcp/resources/solution-resources.js";
 import { registerAuthTools } from "./mcp/tools/auth-tools.js";
@@ -114,6 +115,9 @@ async function main() {
 
     const leetcodeService: LeetCodeBaseService =
         await LeetCodeServiceFactory.createService();
+
+    // Register MCP prompts for learning mode and workspace guidance
+    registerLearningPrompts(server);
 
     registerProblemTools(server, leetcodeService);
     registerUserTools(server, leetcodeService);
