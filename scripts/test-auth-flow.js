@@ -90,4 +90,4 @@ async function testAuthFlow() {
 }
 
 // Run the test
-testAuthFlow();
+testAuthFlow().then(() => console.log("Done"));
