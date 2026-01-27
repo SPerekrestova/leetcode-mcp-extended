@@ -8,7 +8,6 @@
 [![MCP Registry](https://badge.mcpx.dev?status=on)](https://registry.modelcontextprotocol.io/v0.1/servers/io.github.SPerekrestova%2Finteractive-leetcode-mcp/versions/2.0.1)
 [![GitHub license](https://img.shields.io/github/license/SPerekrestova/interactive-leetcode-mcp)](https://github.com/SPerekrestova/interactive-leetcode-mcp/blob/main/LICENSE)
 
-
 ## Attention!
 
 > - Current project is under active development
@@ -16,10 +15,9 @@
 > - Stable builds are published in npm and modelcontextprotocol registries
 > - Also available by latest release tag
 
-
 ## Features
 
-- 🔐 **Native browser authorization** - Uses your default browser with automatic cookie extraction
+- 🔐 **AI-guided authentication** - Claude walks you through one-time credential setup
 - 🎓 **Learning-guided mode** - AI provides hints before solutions to maximize learning
 - 📝 **Solution submission** - Submit code and get instant results
 - 💬 **Conversational workflow** - Practice naturally with Claude Code
@@ -32,7 +30,7 @@
 
 - Node.js v20.x or above
 - LeetCode account
-- Chromium-based browser (Chrome, Edge, or Brave)
+- Any modern web browser (Chrome, Firefox, Safari, Edge, etc.)
 
 ## Installation
 
@@ -93,11 +91,12 @@ Or add to your MCP configuration file (`~/.config/claude-code/mcp.json`) or (`~/
 
 ```
 You: "Authorize with LeetCode"
-Claude: [Opens your default browser to LeetCode login]
-You: [Log in to your LeetCode account in the browser]
-Claude: "Session created. Now use confirm_leetcode_login to complete authorization."
-You: "Confirm my LeetCode login"
-Claude: "✓ Successfully authorized using chrome cookies!"
+Claude: [Opens LeetCode in your browser and guides you through the process]
+Claude: "Please log in to your account. Once logged in, I'll walk you through
+        getting two cookie values we need. First, press F12 to open DevTools..."
+You: [Follows Claude's step-by-step guidance]
+You: "Here are my cookies: csrftoken is abc123... and LEETCODE_SESSION is xyz789..."
+Claude: "✓ Perfect! Your credentials are validated and saved. Welcome back, johndoe!"
 ```
 
 ### 2. Practice a Problem
@@ -125,20 +124,26 @@ Claude: "🎉 Accepted! Runtime: 2ms (beats 95.3%)"
 
 ### Authorization
 
-**`authorize_leetcode`**
+**`start_leetcode_auth`**
 
-- Opens your default browser to LeetCode login page
-- Creates authorization session (5-minute timeout)
-- Returns session ID for next step
+- Initiates authentication flow
+- Opens browser to LeetCode login (when possible)
+- Returns structured instructions for AI agent to guide you
 - No parameters required
 
-**`confirm_leetcode_login`**
+**`save_leetcode_credentials`**
 
-- Completes authorization after browser login
-- Extracts cookies from Chrome/Edge/Brave automatically
-- Validates credentials with LeetCode API
-- Parameters: `sessionId` (from authorize_leetcode)
-- Saves credentials for all future operations
+- Validates and saves your LeetCode credentials
+- Parameters: `csrftoken`, `session` (cookie values you provide)
+- Makes test API call to verify credentials
+- Securely stores credentials for future use
+
+**`check_auth_status`**
+
+- Checks if you're authenticated
+- Returns username and credential age
+- Warns if credentials may expire soon
+- No parameters required
 
 ### Problem Tools
 
@@ -222,33 +227,37 @@ Claude will automatically follow learning-mode guidelines thanks to the MCP prom
 
 ## Troubleshooting
 
-**"Not authorized" error**
+**"Not authorized" or "Invalid credentials" error**
 
-- Run authorization again: Ask Claude to "Authorize with LeetCode"
-- Complete both steps: `authorize_leetcode` then `confirm_leetcode_login`
-- Make sure you're logged into LeetCode in your browser
+- Ask Claude to "Authorize with LeetCode" to start fresh authentication
+- Make sure you're logged into LeetCode in your browser before extracting cookies
+- Verify you copied the complete cookie values (they can be very long)
+- Check that you didn't accidentally copy extra spaces or characters
 
-**"Authorization session expired"**
+**"Credentials have expired"**
 
-- Run `authorize_leetcode` again
-- You have 5 minutes to complete the login process
+- LeetCode cookies typically expire after 7-14 days
+- Simply ask Claude to "Authorize with LeetCode" again
+- You'll need to extract fresh cookies from your browser
 
-**"Could not detect Chrome, Edge, or Brave browser"**
+**Can't find DevTools or cookies**
 
-- The MCP currently supports Chromium-based browsers only
-- Firefox and Safari support coming in future updates
-- Make sure Chrome, Edge, or Brave is installed
+- Ask Claude which browser you're using - Claude will provide browser-specific instructions
+- In Chrome: Press F12, click "Application" tab, expand "Cookies"
+- In Firefox: Press F12, click "Storage" tab, expand "Cookies"
+- In Safari: Enable Developer menu first (Preferences → Advanced), then Develop → Show Web Inspector
 
-**"LeetCode cookies not found"**
+**Copied wrong values**
 
-- Make sure you're logged into LeetCode in your browser
-- Try logging out and back in
-- Check that you're using a supported browser (Chrome/Edge/Brave)
+- Make sure you're copying the VALUE column, not the name
+- The values should be long random strings (50+ characters)
+- Double-click the value to select all of it before copying
+- If you're unsure, Claude can guide you through the process again
 
-**"Extracted cookies are invalid"**
+**Browser doesn't open during authorization**
 
-- Cookies may have expired - log into LeetCode again in your browser
-- Try clearing your browser cookies and logging in fresh
+- That's okay! Just open https://leetcode.com/accounts/login/ manually
+- Claude will still guide you through the cookie extraction process
 
 **"Unsupported language" error**
 
@@ -256,14 +265,8 @@ Claude will automatically follow learning-mode guidelines thanks to the MCP prom
 
 **Submission timeout**
 
-- LeetCode may be slow, wait and retry
-- Check internet connection
-
-**Browser doesn't open during authorization**
-
-- Check if your default browser is set correctly
-- Try opening https://leetcode.com/accounts/login/ manually
-- Then proceed with `confirm_leetcode_login`
+- LeetCode may be experiencing high traffic - wait and retry
+- Check your internet connection
 
 ## Acknowledgements
 
