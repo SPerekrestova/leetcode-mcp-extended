@@ -2,33 +2,25 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import axios from "axios";
 import { z } from "zod";
 import { LeetCodeBaseService } from "../../leetcode/leetcode-base-service.js";
-import {
-    extractLeetCodeCookies,
-    getBrowserCookiePath
-} from "../../utils/browser-cookies.js";
 import { openDefaultBrowser } from "../../utils/browser-launcher.js";
 import { credentialsStorage } from "../../utils/credentials.js";
-import {
-    clearAuthSession,
-    createAuthSession,
-    getAuthSession
-} from "../auth-state.js";
 import { ToolRegistry } from "./tool-registry.js";
 
 /**
  * Auth tool registry class that handles registration of LeetCode authentication tools.
+ * Uses AI-guided manual credential entry for maximum reliability and cross-platform compatibility.
  */
 export class AuthToolRegistry extends ToolRegistry {
     /**
      * Validates LeetCode credentials by making a test API call
      * @param csrf - CSRF token
      * @param session - Session token
-     * @returns true if credentials are valid, false otherwise
+     * @returns username if valid, null if invalid
      */
     private async validateCredentials(
         csrf: string,
         session: string
-    ): Promise<boolean> {
+    ): Promise<string | null> {
         try {
             // Make a simple GraphQL query to validate credentials
             const graphqlQuery = {
@@ -54,134 +46,98 @@ export class AuthToolRegistry extends ToolRegistry {
                 }
             );
 
-            // Check if user is signed in
-            return (
-                response.data?.data?.userStatus?.isSignedIn === true &&
-                response.data?.data?.userStatus?.username
-            );
+            // Check if user is signed in and return username
+            const userStatus = response.data?.data?.userStatus;
+            if (userStatus?.isSignedIn === true && userStatus?.username) {
+                return userStatus.username;
+            }
+            return null;
+        } catch {
+            return null;
+        }
+    }
+
+    /**
+     * Attempts to open browser, returns success status
+     */
+    private async tryOpenBrowser(url: string): Promise<boolean> {
+        try {
+            openDefaultBrowser(url);
+            return true;
         } catch {
             return false;
         }
     }
 
     protected registerPublic(): void {
-        // Authorization tool
+        // Tool 1: Start authentication flow
         this.server.registerTool(
-            "authorize_leetcode",
+            "start_leetcode_auth",
             {
                 description:
-                    "Opens your default browser to LeetCode login page. After logging in, use confirm_leetcode_login to complete authorization."
+                    "Initiates LeetCode authentication flow. Opens browser to LeetCode login (if possible) and provides instructions for the AI agent to guide the user through manual credential extraction from browser DevTools."
             },
             async () => {
-                try {
-                    // Create authorization session
-                    const sessionId = createAuthSession();
+                const loginUrl = "https://leetcode.com/accounts/login/";
+                const browserOpened = await this.tryOpenBrowser(loginUrl);
 
-                    // Open browser to LeetCode login
-                    const loginUrl = "https://leetcode.com/accounts/login/";
-                    openDefaultBrowser(loginUrl);
-
-                    return {
-                        content: [
-                            {
-                                type: "text",
-                                text: JSON.stringify({
-                                    status: "pending",
-                                    sessionId,
-                                    message:
-                                        "Browser opened to LeetCode login page. Please complete the login process in your browser, then use the confirm_leetcode_login tool to complete authorization.",
-                                    expiresIn: "5 minutes",
-                                    nextStep:
-                                        "Call confirm_leetcode_login when you have completed login"
-                                })
-                            }
-                        ]
-                    };
-                } catch (error) {
-                    return {
-                        content: [
-                            {
-                                type: "text",
-                                text: JSON.stringify({
-                                    status: "error",
-                                    message: `Could not open browser automatically: ${error}. Please manually visit https://leetcode.com/accounts/login/ and log in, then use confirm_leetcode_login.`
-                                })
-                            }
-                        ]
-                    };
-                }
+                return {
+                    content: [
+                        {
+                            type: "text",
+                            text: JSON.stringify({
+                                status: "awaiting_credentials",
+                                browserOpened,
+                                loginUrl,
+                                instructions: {
+                                    step1: "Log in to LeetCode in your browser",
+                                    step2_devtools:
+                                        "Open DevTools (F12 or Cmd+Option+I on Mac)",
+                                    step3_navigate:
+                                        "Go to: Application → Cookies → https://leetcode.com",
+                                    step4_find:
+                                        "Find 'csrftoken' and 'LEETCODE_SESSION' cookies",
+                                    step5_copy:
+                                        "Copy both values and share them with me",
+                                    note: "The AI agent should use the leetcode_authentication_guide prompt to provide detailed step-by-step guidance"
+                                }
+                            })
+                        }
+                    ]
+                };
             }
         );
 
-        // Confirm login tool
+        // Tool 2: Save and validate credentials
         this.server.registerTool(
-            "confirm_leetcode_login",
+            "save_leetcode_credentials",
             {
                 description:
-                    "Confirms LeetCode login completion and extracts cookies from your browser. Call this after logging in via authorize_leetcode.",
-
+                    "Validates and saves LeetCode credentials provided by the user. Validates credentials by making a test API call to LeetCode, then securely stores them for future authenticated requests.",
                 inputSchema: {
-                    sessionId: z
+                    csrftoken: z
                         .string()
+                        .min(1)
                         .describe(
-                            "Authorization session ID from authorize_leetcode"
+                            "CSRF token from LeetCode cookies (csrftoken)"
+                        ),
+                    session: z
+                        .string()
+                        .min(1)
+                        .describe(
+                            "Session token from LeetCode cookies (LEETCODE_SESSION)"
                         )
                 }
             },
-            async ({ sessionId }) => {
+            async ({ csrftoken, session }) => {
                 try {
-                    // Verify session exists and hasn't expired
-                    const session = getAuthSession(sessionId);
-                    if (!session) {
-                        return {
-                            content: [
-                                {
-                                    type: "text",
-                                    text: JSON.stringify({
-                                        status: "error",
-                                        message:
-                                            "Authorization session expired or not found. Please run authorize_leetcode again."
-                                    })
-                                }
-                            ]
-                        };
-                    }
-
-                    // Detect browser cookie path
-                    const browserInfo = getBrowserCookiePath();
-                    if (!browserInfo) {
-                        return {
-                            content: [
-                                {
-                                    type: "text",
-                                    text: JSON.stringify({
-                                        status: "error",
-                                        message:
-                                            "Could not detect Chrome, Edge, or Brave browser. Automatic cookie extraction is not supported for other browsers yet.",
-                                        manualSteps: [
-                                            "1. Open Chrome DevTools (F12)",
-                                            "2. Go to Application → Cookies → https://leetcode.com",
-                                            "3. Copy values for: csrftoken and LEETCODE_SESSION",
-                                            "4. [Future: Use manual_authorize_leetcode tool]"
-                                        ]
-                                    })
-                                }
-                            ]
-                        };
-                    }
-
-                    // Extract cookies from browser
-                    const cookies = await extractLeetCodeCookies(
-                        browserInfo.path
+                    // Validate credentials
+                    const username = await this.validateCredentials(
+                        csrftoken,
+                        session
                     );
 
-                    // Validate cookies by testing API call
-                    const isValid = await this.validateCredentials(
-                        cookies.csrftoken,
-                        cookies.LEETCODE_SESSION
-                    );
-
-                    if (!isValid) {
+                    if (!username) {
                         return {
                             content: [
                                 {
@@ -189,7 +145,8 @@ export class AuthToolRegistry extends ToolRegistry {
                                     text: JSON.stringify({
                                         status: "error",
                                         message:
-                                            "Extracted cookies are invalid. Please make sure you are logged into LeetCode in your browser and try again."
+                                            "Invalid credentials. Please ensure you are logged into LeetCode and copied the correct cookie values.",
+                                        hint: "Make sure to copy the entire value of both cookies, not just the visible portion."
                                     })
                                 }
                             ]
@@ -198,14 +155,10 @@ export class AuthToolRegistry extends ToolRegistry {
 
                     // Save credentials
                     await credentialsStorage.save({
-                        csrftoken: cookies.csrftoken,
-                        LEETCODE_SESSION: cookies.LEETCODE_SESSION,
-                        browser: browserInfo.browser,
+                        csrftoken,
+                        LEETCODE_SESSION: session,
                         createdAt: new Date().toISOString()
                     });
-
-                    // Clear auth session
-                    clearAuthSession(sessionId);
 
                     return {
                         content: [
@@ -213,8 +166,8 @@ export class AuthToolRegistry extends ToolRegistry {
                                 type: "text",
                                 text: JSON.stringify({
                                     status: "success",
-                                    message: `Successfully authorized using ${browserInfo.browser} cookies. You can now use authenticated LeetCode features.`,
-                                    browser: browserInfo.browser
+                                    username,
+                                    message: `Successfully authenticated as ${username}! Your credentials have been saved securely. You can now use all authenticated LeetCode features.`
                                 })
                             }
                         ]
@@ -226,13 +179,120 @@ export class AuthToolRegistry extends ToolRegistry {
                                 type: "text",
                                 text: JSON.stringify({
                                     status: "error",
-                                    message: `Failed to extract cookies: ${error}`,
-                                    manualSteps: [
-                                        "1. Open Chrome DevTools (F12)",
-                                        "2. Go to Application → Cookies → https://leetcode.com",
-                                        "3. Copy values for: csrftoken and LEETCODE_SESSION",
-                                        "4. [Future: Use manual_authorize_leetcode tool]"
-                                    ]
+                                    message: `Failed to save credentials: ${error}`,
+                                    suggestion:
+                                        "Please try the authentication process again."
+                                })
+                            }
+                        ]
+                    };
+                }
+            }
+        );
+
+        // Tool 3: Check authentication status
+        this.server.registerTool(
+            "check_auth_status",
+            {
+                description:
+                    "Checks if LeetCode credentials exist and are still valid. Returns authentication status, username if authenticated, and credential age information."
+            },
+            async () => {
+                try {
+                    // Check if credentials exist
+                    const credentialsExist = await credentialsStorage.exists();
+                    if (!credentialsExist) {
+                        return {
+                            content: [
+                                {
+                                    type: "text",
+                                    text: JSON.stringify({
+                                        authenticated: false,
+                                        message:
+                                            "No credentials found. Please use start_leetcode_auth to authenticate."
+                                    })
+                                }
+                            ]
+                        };
+                    }
+
+                    // Load and validate credentials
+                    const credentials = await credentialsStorage.load();
+                    if (!credentials) {
+                        return {
+                            content: [
+                                {
+                                    type: "text",
+                                    text: JSON.stringify({
+                                        authenticated: false,
+                                        message:
+                                            "Could not load credentials. Please authenticate again."
+                                    })
+                                }
+                            ]
+                        };
+                    }
+
+                    // Validate credentials are still valid
+                    const username = await this.validateCredentials(
+                        credentials.csrftoken,
+                        credentials.LEETCODE_SESSION
+                    );
+
+                    if (!username) {
+                        return {
+                            content: [
+                                {
+                                    type: "text",
+                                    text: JSON.stringify({
+                                        authenticated: false,
+                                        expired: true,
+                                        message:
+                                            "Credentials have expired. Please authenticate again using start_leetcode_auth."
+                                    })
+                                }
+                            ]
+                        };
+                    }
+
+                    // Calculate credential age
+                    const createdAt = credentials.createdAt
+                        ? new Date(credentials.createdAt)
+                        : null;
+                    const ageInDays = createdAt
+                        ? Math.floor(
+                              (Date.now() - createdAt.getTime()) /
+                                  (1000 * 60 * 60 * 24)
+                          )
+                        : null;
+
+                    return {
+                        content: [
+                            {
+                                type: "text",
+                                text: JSON.stringify({
+                                    authenticated: true,
+                                    username,
+                                    credentialsAge: ageInDays
+                                        ? `${ageInDays} days`
+                                        : "unknown",
+                                    message: `Authenticated as ${username}. Credentials are valid.`,
+                                    warning:
+                                        ageInDays && ageInDays >= 5
+                                            ? "Credentials may expire soon (typical lifetime: 7-14 days). If you encounter authentication errors, please re-authenticate."
+                                            : null
+                                })
+                            }
+                        ]
+                    };
+                } catch (error) {
+                    return {
+                        content: [
+                            {
+                                type: "text",
+                                text: JSON.stringify({
+                                    authenticated: false,
+                                    message: `Error checking authentication status: ${error}`
                                 })
                             }
                         ]
